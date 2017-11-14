@@ -253,6 +253,7 @@ class Dataset[T] private[sql](
           case seq: Seq[_] => seq.mkString("[", ", ", "]")
           case d: Date =>
             DateTimeUtils.dateToString(DateTimeUtils.fromJavaDate(d))
+          case ip: Ipv4Address => ip.toString
           case ts: Timestamp =>
             DateTimeUtils.timestampToString(DateTimeUtils.fromJavaTimestamp(ts), timeZone)
           case _ => cell.toString

@@ -23,6 +23,7 @@ import scala.reflect.{classTag, ClassTag}
 import scala.reflect.runtime.universe.TypeTag
 
 import org.apache.spark.annotation.{Experimental, InterfaceStability}
+import org.apache.spark.sql.catalyst.Ipv4Address
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.encoders.{encoderFor, ExpressionEncoder}
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, Cast}
@@ -66,6 +67,13 @@ object Encoders {
    * @since 1.6.0
    */
   def INT: Encoder[java.lang.Integer] = ExpressionEncoder()
+
+  /**
+   * An encoder for a nullable IPv4 address type.
+   * The Scala primitive encoder is available as [[Ipv4Address]].
+   * @since 2.4.0
+   */
+  def IPV4ADDRESS: Encoder[Ipv4Address] = ExpressionEncoder()
 
   /**
    * An encoder for nullable long type.

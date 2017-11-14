@@ -50,6 +50,11 @@ public class DataTypes {
   public static final DataType DateType = DateType$.MODULE$;
 
   /**
+   * Gets the Ipv4AddressType object.
+   */
+  public static final DataType Ipv4AddressType = Ipv4AddressType$.MODULE$;
+
+  /**
    * Gets the TimestampType object.
    */
   public static final DataType TimestampType = TimestampType$.MODULE$;

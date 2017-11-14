@@ -402,7 +402,8 @@ abstract class HashExpression[E] extends Expression {
       ctx: CodegenContext): String = dataType match {
     case NullType => ""
     case BooleanType => genHashBoolean(input, result)
-    case ByteType | ShortType | IntegerType | DateType => genHashInt(input, result)
+    case ByteType | ShortType | IntegerType | DateType | Ipv4AddressType =>
+      genHashInt(input, result)
     case LongType => genHashLong(input, result)
     case TimestampType => genHashTimestamp(input, result)
     case FloatType => genHashFloat(input, result)

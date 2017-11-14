@@ -23,6 +23,7 @@ import scala.reflect.runtime.universe.TypeTag
 
 import org.apache.spark.annotation.InterfaceStability
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.Ipv4Address
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 
 /**
@@ -50,6 +51,9 @@ abstract class SQLImplicits extends LowPrioritySQLImplicits {
 
   /** @since 1.6.0 */
   implicit def newIntEncoder: Encoder[Int] = Encoders.scalaInt
+
+  /** @since 2.3.0 */
+  implicit def newIpv4Address: Encoder[Ipv4Address] = Encoders.IPV4ADDRESS
 
   /** @since 1.6.0 */
   implicit def newLongEncoder: Encoder[Long] = Encoders.scalaLong

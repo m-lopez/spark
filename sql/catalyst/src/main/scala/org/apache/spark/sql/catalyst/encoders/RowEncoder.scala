@@ -22,6 +22,7 @@ import scala.reflect.ClassTag
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.Ipv4Address
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
@@ -104,6 +105,14 @@ object RowEncoder {
         DateTimeUtils.getClass,
         DateType,
         "fromJavaDate",
+        inputObject :: Nil,
+        returnNullable = false)
+
+    case Ipv4AddressType =>
+      StaticInvoke(
+        Ipv4AddressUtils.getClass,
+        Ipv4AddressType,
+        "fromInt",
         inputObject :: Nil,
         returnNullable = false)
 
@@ -226,6 +235,7 @@ object RowEncoder {
     case _ if ScalaReflection.isNativeType(dt) => dt
     case TimestampType => ObjectType(classOf[java.sql.Timestamp])
     case DateType => ObjectType(classOf[java.sql.Date])
+    case Ipv4AddressType => ObjectType(classOf[Ipv4Address])
     case _: DecimalType => ObjectType(classOf[java.math.BigDecimal])
     case StringType => ObjectType(classOf[java.lang.String])
     case _: ArrayType => ObjectType(classOf[scala.collection.Seq[_]])
@@ -284,6 +294,14 @@ object RowEncoder {
         DateTimeUtils.getClass,
         ObjectType(classOf[java.sql.Date]),
         "toJavaDate",
+        input :: Nil,
+        returnNullable = false)
+
+    case Ipv4AddressType =>
+      StaticInvoke(
+        Ipv4AddressUtils.getClass,
+        ObjectType(classOf[Ipv4Address]),
+        "fromInt",
         input :: Nil,
         returnNullable = false)
 

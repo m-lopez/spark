@@ -199,7 +199,7 @@ final class SpecificInternalRow(val values: Array[MutableValue]) extends BaseGen
         case ByteType => new MutableByte
         case ShortType => new MutableShort
         // We use INT for DATE internally
-        case IntegerType | DateType => new MutableInt
+        case IntegerType | DateType | Ipv4AddressType => new MutableInt
         // We use Long for Timestamp internally
         case LongType | TimestampType => new MutableLong
         case FloatType => new MutableFloat

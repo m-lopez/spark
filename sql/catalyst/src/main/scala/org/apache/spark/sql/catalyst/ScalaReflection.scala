@@ -24,6 +24,29 @@ import org.apache.spark.sql.catalyst.util.{DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
 
+/** Ipv4 address type. This should _not_ be here. */
+// I had this defined in another translation unit and as a consequence,
+// nullpointers abound.
+case class Ipv4Address(val address: Int) {
+  override def toString: String = {
+    val buf = java.nio.ByteBuffer.allocate(4)
+    buf.putInt(address)
+    buf.array.map(x => (x & 0xFF).toString).mkString(".")
+  }
+}
+
+object Ipv4Address {
+  def applyPrefix(x: Ipv4Address, n: Int): Ipv4Address = {
+    if (0 < n || n <= 32) {
+      val prefix = -1 << (32 - n)
+      new Ipv4Address(x.address & prefix)
+    } else if (n == 0) {
+      new Ipv4Address(0)
+    } else {
+      throw new Exception("IPv4 CIDR out of range")
+    }
+  }
+}
 
 /**
  * A helper trait to create [[org.apache.spark.sql.catalyst.encoders.ExpressionEncoder]]s
@@ -242,6 +265,14 @@ object ScalaReflection extends ScalaReflection {
           DateTimeUtils.getClass,
           ObjectType(classOf[java.sql.Date]),
           "toJavaDate",
+          getPath :: Nil,
+          returnNullable = false)
+
+      case t if t <:< localTypeOf[Ipv4Address] =>
+        StaticInvoke(
+          Ipv4AddressUtils.getClass,
+          ObjectType(classOf[Ipv4Address]),
+          "fromInt",
           getPath :: Nil,
           returnNullable = false)
 
@@ -543,6 +574,15 @@ object ScalaReflection extends ScalaReflection {
           inputObject :: Nil,
           returnNullable = false)
 
+      case t if t <:< localTypeOf[Ipv4Address] =>
+        StaticInvoke(
+          Ipv4AddressUtils.getClass,
+          Ipv4AddressType,
+          "toInt",
+          inputObject :: Nil,
+          propagateNull = false,
+          returnNullable = false)
+
       case t if t <:< localTypeOf[BigDecimal] =>
         StaticInvoke(
           Decimal.getClass,
@@ -737,6 +777,7 @@ object ScalaReflection extends ScalaReflection {
       case t if t <:< localTypeOf[String] => Schema(StringType, nullable = true)
       case t if t <:< localTypeOf[java.sql.Timestamp] => Schema(TimestampType, nullable = true)
       case t if t <:< localTypeOf[java.sql.Date] => Schema(DateType, nullable = true)
+      case t if t <:< localTypeOf[Ipv4Address] => Schema(Ipv4AddressType, nullable = true)
       case t if t <:< localTypeOf[BigDecimal] => Schema(DecimalType.SYSTEM_DEFAULT, nullable = true)
       case t if t <:< localTypeOf[java.math.BigDecimal] =>
         Schema(DecimalType.SYSTEM_DEFAULT, nullable = true)
