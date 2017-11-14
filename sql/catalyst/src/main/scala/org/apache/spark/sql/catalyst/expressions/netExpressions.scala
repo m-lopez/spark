@@ -20,20 +20,6 @@ package org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.types.{DataType, Ipv4AddressType}
 
-// * `ipv4_bit_or(a,a): a`
-// * `ipv4_bit_and(a,a): a`
-// * `ipv4_distance(a,a): L`
-// * `ipv4_forward(a,L): a`
-// * `ipv4_compliment(a): a`
-// * `ipv4_eq(a,a): B`
-// * `ipv4_neq(a,a): B`
-// * `ipv4_less(a,a): B`
-// * `ipv4_less_eq(a,a): B`
-// * `ipv4_greater(a,a): B`
-// * `ipv4_greater_eq(a,a): B`
-// * `ipv4_from_string(s): a`
-// * `ipv4_from_binary(b): a`
-
 case class IPv4BitOr(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
 
