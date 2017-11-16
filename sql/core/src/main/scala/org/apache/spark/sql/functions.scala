@@ -2170,6 +2170,18 @@ object functions {
   def ipv4_bit_and(l: Column, r: Column): Column =
     withExpr { IPv4BitAnd(l.expr, r.expr) }
 
+  /**
+   * Computes the number of increments required to reach l from r.
+   *
+   * @note If `r` occurs before `l` when interpreting each address as
+   *       unsigned integers, then the distance is given as negative.
+   *
+   * @group net_funcs
+   * @since 2.4.0
+   */
+  def ipv4_distance(l: Column, r: Column): Column =
+    withExpr { IPv4Distance(l.expr, r.expr) }
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions
   //////////////////////////////////////////////////////////////////////////////////////////////

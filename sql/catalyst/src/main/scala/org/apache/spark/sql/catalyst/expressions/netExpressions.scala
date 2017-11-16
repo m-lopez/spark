@@ -18,7 +18,7 @@
 package org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
-import org.apache.spark.sql.types.{DataType, Ipv4AddressType}
+import org.apache.spark.sql.types.{DataType, Ipv4AddressType, LongType}
 
 case class IPv4BitOr(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
@@ -34,14 +34,8 @@ case class IPv4BitOr(left: Expression, right: Expression)
   override protected def doGenCode(
     ctx: CodegenContext,
     ev: ExprCode
-  ): ExprCode = {
-    nullSafeCodeGen(ctx, ev, (x, y) => {
-      s"""
-        ${ev.value} = $x | $y;
-        ${ev.isNull} = ${ev.value} == null;
-       """
-    })
-  }
+  ): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) => { s"${ev.value} = $x | $y;" })
 }
 
 case class IPv4BitAnd(left: Expression, right: Expression)
@@ -58,12 +52,30 @@ case class IPv4BitAnd(left: Expression, right: Expression)
   override protected def doGenCode(
     ctx: CodegenContext,
     ev: ExprCode
-  ): ExprCode = {
-    nullSafeCodeGen(ctx, ev, (x, y) => {
-      s"""
-        ${ev.value} = $x & $y;
-        ${ev.isNull} = ${ev.value} == null;
-       """
-    })
+  ): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) => { s"${ev.value} = $x & $y;" })
+}
+
+case class IPv4Distance(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def nullable: Boolean = true
+
+  override def inputTypes: Seq[DataType] = Seq(Ipv4AddressType, Ipv4AddressType)
+
+  override def dataType: DataType = LongType
+
+  protected override def nullSafeEval(x: Any, y: Any): Any = {
+    val xLong = x.asInstanceOf[Ipv4AddressType.InternalType].toLong
+    val yLong = y.asInstanceOf[Ipv4AddressType.InternalType].toLong
+    yLong - xLong
   }
+
+  override protected def doGenCode(
+    ctx: CodegenContext,
+    ev: ExprCode
+  ): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) => {
+      s"${ev.value} = (long)($y) - (long)($x);"
+    })
 }
