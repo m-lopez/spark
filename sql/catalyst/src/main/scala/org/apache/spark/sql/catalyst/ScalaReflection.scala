@@ -24,6 +24,20 @@ import org.apache.spark.sql.catalyst.util.{DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
 
+/**
+ * A Scala representation of IPv6 addresses.
+ * @todo Get this out of here. It has to go into a better place.
+ *       Or make it work with INet or something.
+ */
+case class Ipv6(hi: Long, lo: Long) {
+  def getBytes(): Array[Byte] =
+    java.nio.ByteBuffer.allocate(16).putLong(hi).putLong(lo).array()
+
+  /** @todo replace this hack with a short-form printer IPv6 addresses. */
+  override def toString: String =
+    java.net.Inet6Address.getByAddress("", getBytes(), 0)
+      .getHostAddress.dropRight(2)
+}
 
 /**
  * A helper trait to create [[org.apache.spark.sql.catalyst.encoders.ExpressionEncoder]]s
