@@ -148,6 +148,8 @@ public final class UnsafeArrayData extends ArrayData {
       return getDecimal(ordinal, dt.precision(), dt.scale());
     } else if (dataType instanceof DateType) {
       return getInt(ordinal);
+    } else if (dataType instanceof Ipv6AddressType) {
+      return getLong(ordinal);
     } else if (dataType instanceof TimestampType) {
       return getLong(ordinal);
     } else if (dataType instanceof BinaryType) {

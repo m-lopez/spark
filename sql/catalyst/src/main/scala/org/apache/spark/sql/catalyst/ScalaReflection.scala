@@ -17,6 +17,8 @@
 
 package org.apache.spark.sql.catalyst
 
+import java.net.UnknownHostException
+
 import org.apache.spark.sql.catalyst.analysis.{GetColumnByOrdinal, UnresolvedAttribute, UnresolvedExtractValue}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
@@ -37,6 +39,21 @@ case class Ipv6(hi: Long, lo: Long) {
   override def toString: String =
     java.net.Inet6Address.getByAddress("", getBytes(), 0)
       .getHostAddress.dropRight(2)
+}
+
+object Ipv6 {
+  def fromStringNullable(s: UTF8String): Ipv6 = try {
+    val bytes = java.net.InetAddress.getByName(s.toString).getAddress
+    val buf = java.nio.ByteBuffer.wrap(bytes)
+    val hi = buf.getLong
+    val lo = buf.getLong
+    Ipv6(hi, lo)
+  } catch {
+    case _: UnknownHostException => null
+  }
+
+  def fromLoBits(x: Long): Ipv6 = Ipv6(0L, x)
+  def toLoBits(x: Ipv6): Long = x.lo
 }
 
 /**
@@ -256,6 +273,14 @@ object ScalaReflection extends ScalaReflection {
           DateTimeUtils.getClass,
           ObjectType(classOf[java.sql.Date]),
           "toJavaDate",
+          getPath :: Nil,
+          returnNullable = false)
+
+      case t if t <:< localTypeOf[Ipv6] =>
+        StaticInvoke(
+          Ipv6.getClass,
+          Ipv6AddressType,
+          "toLoBits",
           getPath :: Nil,
           returnNullable = false)
 
@@ -557,6 +582,15 @@ object ScalaReflection extends ScalaReflection {
           inputObject :: Nil,
           returnNullable = false)
 
+        /** I don't think that this is right. */
+      case t if t <:< localTypeOf[Ipv6] =>
+        StaticInvoke(
+          Ipv6.getClass,
+          Ipv6AddressType,
+          "toLoBits",
+          inputObject :: Nil,
+          returnNullable = false)
+
       case t if t <:< localTypeOf[BigDecimal] =>
         StaticInvoke(
           Decimal.getClass,
@@ -751,6 +785,7 @@ object ScalaReflection extends ScalaReflection {
       case t if t <:< localTypeOf[String] => Schema(StringType, nullable = true)
       case t if t <:< localTypeOf[java.sql.Timestamp] => Schema(TimestampType, nullable = true)
       case t if t <:< localTypeOf[java.sql.Date] => Schema(DateType, nullable = true)
+      case t if t <:< localTypeOf[Ipv6] => Schema(Ipv6AddressType, nullable = true)
       case t if t <:< localTypeOf[BigDecimal] => Schema(DecimalType.SYSTEM_DEFAULT, nullable = true)
       case t if t <:< localTypeOf[java.math.BigDecimal] =>
         Schema(DecimalType.SYSTEM_DEFAULT, nullable = true)

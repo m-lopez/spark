@@ -92,6 +92,7 @@ public final class UnsafeRow extends InternalRow implements Externalizable, Kryo
           FloatType,
           DoubleType,
           DateType,
+          Ipv6AddressType,
           TimestampType
         })));
   }
@@ -327,6 +328,8 @@ public final class UnsafeRow extends InternalRow implements Externalizable, Kryo
       DecimalType dt = (DecimalType) dataType;
       return getDecimal(ordinal, dt.precision(), dt.scale());
     } else if (dataType instanceof DateType) {
+      return getInt(ordinal);
+    } else if (dataType instanceof Ipv6AddressType) {
       return getInt(ordinal);
     } else if (dataType instanceof TimestampType) {
       return getLong(ordinal);

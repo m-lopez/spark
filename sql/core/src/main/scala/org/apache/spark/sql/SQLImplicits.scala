@@ -23,6 +23,7 @@ import scala.reflect.runtime.universe.TypeTag
 
 import org.apache.spark.annotation.InterfaceStability
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.Ipv6
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 
 /**
@@ -80,6 +81,9 @@ abstract class SQLImplicits extends LowPrioritySQLImplicits {
 
   /** @since 2.2.0 */
   implicit def newDateEncoder: Encoder[java.sql.Date] = Encoders.DATE
+
+  /** @since 2.4.0 */
+  implicit def newIpv6Encoder: Encoder[Ipv6] = Encoders.IPV6
 
   /** @since 2.2.0 */
   implicit def newTimeStampEncoder: Encoder[java.sql.Timestamp] = Encoders.TIMESTAMP

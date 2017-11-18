@@ -22,11 +22,11 @@ import scala.reflect.ClassTag
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.catalyst.{Ipv6, ScalaReflection}
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData, DateTimeUtils, GenericArrayData}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, ArrayData, DateTimeUtils}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -47,6 +47,8 @@ import org.apache.spark.unsafe.types.UTF8String
  *
  *   DateType -> java.sql.Date
  *   TimestampType -> java.sql.Timestamp
+ *
+ *   Ipv6AddressType -> (Long, Long)
  *
  *   BinaryType -> byte array
  *   ArrayType -> scala.collection.Seq or Array
@@ -106,6 +108,13 @@ object RowEncoder {
         "fromJavaDate",
         inputObject :: Nil,
         returnNullable = false)
+
+    case Ipv6AddressType =>
+      StaticInvoke(
+        Ipv6AddressUtils.getClass,
+        Ipv6AddressType,
+        "fromString",
+        inputObject :: Nil)
 
     case d: DecimalType =>
       StaticInvoke(
@@ -226,6 +235,7 @@ object RowEncoder {
     case _ if ScalaReflection.isNativeType(dt) => dt
     case TimestampType => ObjectType(classOf[java.sql.Timestamp])
     case DateType => ObjectType(classOf[java.sql.Date])
+    case Ipv6AddressType => ObjectType(classOf[Ipv6])
     case _: DecimalType => ObjectType(classOf[java.math.BigDecimal])
     case StringType => ObjectType(classOf[java.lang.String])
     case _: ArrayType => ObjectType(classOf[scala.collection.Seq[_]])
@@ -284,6 +294,14 @@ object RowEncoder {
         DateTimeUtils.getClass,
         ObjectType(classOf[java.sql.Date]),
         "toJavaDate",
+        input :: Nil,
+        returnNullable = false)
+
+    case Ipv6AddressType =>
+      StaticInvoke(
+        Ipv6.getClass,
+        ObjectType(classOf[Ipv6]),
+        "fromLoBits",
         input :: Nil,
         returnNullable = false)
 

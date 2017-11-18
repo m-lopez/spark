@@ -23,6 +23,7 @@ import scala.reflect.{classTag, ClassTag}
 import scala.reflect.runtime.universe.TypeTag
 
 import org.apache.spark.annotation.{Experimental, InterfaceStability}
+import org.apache.spark.sql.catalyst.Ipv6
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.encoders.{encoderFor, ExpressionEncoder}
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, Cast}
@@ -108,6 +109,13 @@ object Encoders {
    * @since 1.6.0
    */
   def DATE: Encoder[java.sql.Date] = ExpressionEncoder()
+
+  /**
+   * An encoder for a nullable IPv6 address type.
+   *
+   * @since 2.4.0
+   */
+  def IPV6: Encoder[Ipv6] = ExpressionEncoder()
 
   /**
    * An encoder for nullable timestamp type.

@@ -255,6 +255,7 @@ class Dataset[T] private[sql](
             DateTimeUtils.dateToString(DateTimeUtils.fromJavaDate(d))
           case ts: Timestamp =>
             DateTimeUtils.timestampToString(DateTimeUtils.fromJavaTimestamp(ts), timeZone)
+          case ip: Ipv6 => ip.toString
           case _ => cell.toString
         }
         if (truncate > 0 && str.length > truncate) {

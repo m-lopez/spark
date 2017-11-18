@@ -20,7 +20,7 @@ package org.apache.spark.sql.catalyst.expressions
 import java.math.{BigDecimal => JavaBigDecimal}
 
 import org.apache.spark.SparkException
-import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.{InternalRow, Ipv6}
 import org.apache.spark.sql.catalyst.analysis.{TypeCheckResult, TypeCoercion}
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.util._
@@ -54,6 +54,8 @@ object Cast {
 
     case (StringType, DateType) => true
     case (TimestampType, DateType) => true
+
+    case (StringType, Ipv6AddressType) => true
 
     case (StringType, CalendarIntervalType) => true
 
@@ -146,6 +148,9 @@ object Cast {
     case (_, DateType) => true
     case (DateType, TimestampType) => false
     case (DateType, _) => true
+
+    case (_, Ipv6AddressType) => false
+
     case (_, CalendarIntervalType) => true
 
     case (_, _: DecimalType) => true  // overflow
@@ -272,6 +277,12 @@ case class Cast(child: Expression, dataType: DataType, timeZoneId: Option[String
     // TimestampWritable.floatToTimestamp
     case FloatType =>
       buildCast[Float](_, f => doubleToTimestamp(f.toDouble))
+  }
+
+  // Ipv6AddressConverter
+  private[this] def castToIpv6Address(from: DataType): Any => Any = from match {
+    case StringType =>
+      buildCast[StringType.InternalType](_, Ipv6.fromStringNullable)
   }
 
   private[this] def decimalToTimestamp(d: Decimal): Long = {
@@ -504,6 +515,7 @@ case class Cast(child: Expression, dataType: DataType, timeZoneId: Option[String
         case StringType => castToString(from)
         case BinaryType => castToBinary(from)
         case DateType => castToDate(from)
+        case Ipv6AddressType => castToIpv6Address(from)
         case decimal: DecimalType => castToDecimal(from, decimal)
         case TimestampType => castToTimestamp(from)
         case CalendarIntervalType => castToInterval(from)
