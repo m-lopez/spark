@@ -2182,6 +2182,31 @@ object functions {
   def ipv4_distance(l: Column, r: Column): Column =
     withExpr { IPv4Distance(l.expr, r.expr) }
 
+  /**
+   * Computes the IP address after jumping `r` steps from `l`.
+   *
+   * @todo Move to `Column.scala`?
+   *
+   * @group net_funcs
+   * @since 2.4.0
+   */
+  def ipv4_jump(l: Column, r: Column): Column =
+    withExpr { IPv4Jump(l.expr, r.expr) }
+
+  /**
+   * Applies masks only the first `n` bits of an IPv4 address `x`.
+   *
+   * @group net_funcs
+   * @since 2.4.0
+   */
+  def ipv4_mask_by_prefix(x: Column, n: Int): Column = {
+    require(
+      0 <= n && n <= n,
+      "an IPv4 address prefix mask must be between 0 and 32"
+    )
+    withExpr { Ipv4MaskByPrefixLength(x.expr, lit(n).expr) }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions
   //////////////////////////////////////////////////////////////////////////////////////////////

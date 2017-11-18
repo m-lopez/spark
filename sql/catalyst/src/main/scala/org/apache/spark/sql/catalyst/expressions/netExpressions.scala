@@ -18,7 +18,7 @@
 package org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
-import org.apache.spark.sql.types.{DataType, Ipv4AddressType, LongType}
+import org.apache.spark.sql.types._
 
 case class IPv4BitOr(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
@@ -77,5 +77,65 @@ case class IPv4Distance(left: Expression, right: Expression)
   ): ExprCode =
     nullSafeCodeGen(ctx, ev, (x, y) => {
       s"${ev.value} = (long)($y) - (long)($x);"
+    })
+}
+
+case class IPv4Jump(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def nullable: Boolean = true
+
+  override def inputTypes: Seq[DataType] = Seq(Ipv4AddressType, IntegerType)
+
+  override def dataType: DataType = Ipv4AddressType
+
+  protected override def nullSafeEval(x: Any, y: Any): Any = {
+    x.asInstanceOf[Ipv4AddressType.InternalType] +
+      y.asInstanceOf[IntegerType.InternalType]
+  }
+
+  override protected def doGenCode(
+    ctx: CodegenContext,
+    ev: ExprCode
+  ): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) => { s"${ev.value} = $x + $y;" })
+}
+
+/** @todo What is the proper way to restrict the right operand to [0, 32]?
+ */
+case class Ipv4MaskByPrefixLength(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def nullable: Boolean = true
+
+  override def inputTypes: Seq[DataType] = Seq(Ipv4AddressType, IntegerType)
+
+  override def dataType: DataType = Ipv4AddressType
+
+  protected override def nullSafeEval(x: Any, y: Any): Any = {
+    val yInt = y.asInstanceOf[IntegerType.InternalType]
+    if (yInt == 0) {
+      0
+    } else if (0 < yInt && yInt <= 32) {
+      x.asInstanceOf[Ipv4AddressType.InternalType] & (-1 << (32 - yInt))
+    } else {
+      null
+    }
+  }
+
+  override protected def doGenCode(
+    ctx: CodegenContext,
+    ev: ExprCode
+  ): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) => {
+      s"""
+        if ($y == 0) {
+          ${ev.value} = 0;
+        } else if (0 < $y && $y <= 32) {
+          ${ev.value} = (-1 << (32 - $y));
+        } else {
+          ${ev.isNull} = true;
+        }
+      """
     })
 }
