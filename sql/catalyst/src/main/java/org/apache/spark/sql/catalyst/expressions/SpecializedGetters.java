@@ -19,6 +19,7 @@ package org.apache.spark.sql.catalyst.expressions;
 
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.util.ArrayData;
+import org.apache.spark.sql.catalyst.util.Ipv6AddressData;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.Decimal;
 import org.apache.spark.sql.catalyst.util.MapData;
@@ -54,6 +55,8 @@ public interface SpecializedGetters {
   InternalRow getStruct(int ordinal, int numFields);
 
   ArrayData getArray(int ordinal);
+
+  Ipv6AddressData getIpv6Address(int ordinal);
 
   MapData getMap(int ordinal);
 

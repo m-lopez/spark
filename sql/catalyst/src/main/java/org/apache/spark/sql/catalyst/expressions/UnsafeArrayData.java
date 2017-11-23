@@ -279,6 +279,12 @@ public final class UnsafeArrayData extends ArrayData {
   }
 
   @Override
+  public UnsafeIpv6Address getIpv6Address(int ordinal) {
+    if (isNullAt(ordinal)) return null;
+    return new UnsafeIpv6Address();
+  }
+
+  @Override
   public UnsafeMapData getMap(int ordinal) {
     if (isNullAt(ordinal)) return null;
     final long offsetAndSize = getLong(ordinal);

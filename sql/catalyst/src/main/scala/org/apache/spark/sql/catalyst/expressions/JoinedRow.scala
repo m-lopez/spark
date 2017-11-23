@@ -18,7 +18,7 @@
 package org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
+import org.apache.spark.sql.catalyst.util.{ArrayData, Ipv6AddressData, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
 
@@ -103,6 +103,9 @@ class JoinedRow extends InternalRow {
 
   override def getBinary(i: Int): Array[Byte] =
     if (i < row1.numFields) row1.getBinary(i) else row2.getBinary(i - row1.numFields)
+
+  override def getIpv6Address(i: Int): Ipv6AddressData =
+    if (i < row1.numFields) row1.getIpv6Address(i) else row2.getIpv6Address(i - row1.numFields)
 
   override def getArray(i: Int): ArrayData =
     if (i < row1.numFields) row1.getArray(i) else row2.getArray(i - row1.numFields)
