@@ -3482,4 +3482,14 @@ object functions {
   def callUDF(udfName: String, cols: Column*): Column = withExpr {
     UnresolvedFunction(udfName, cols.map(_.expr), isDistinct = false)
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  // Network Type functions
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
+  def ipv6_address_eq(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressEqExpression(x.expr, y.expr))
+
+  def ipv6_address_neq(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressNeqExpression(x.expr, y.expr))
 }
