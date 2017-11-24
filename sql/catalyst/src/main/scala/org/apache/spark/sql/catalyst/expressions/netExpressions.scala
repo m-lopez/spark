@@ -96,3 +96,167 @@ case class Ipv6AddressNeqExpression(left: Expression, right: Expression)
       """
     )
 }
+
+case class Ipv6AddressLtExpression(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      Ipv6AddressExpressionUtils.ipv6DataType
+    )
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = "<"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    val xHi = xRow.getLong(0)
+    val yHi = yRow.getLong(0)
+    if (xHi == yHi) {
+      java.lang.Long.compareUnsigned(xRow.getLong(1), yRow.getLong(1)) < 0
+    } else {
+      java.lang.Long.compareUnsigned(xHi, yHi) < 0
+    }
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        long xHi = $x.getLong(0);
+        long yHi = $y.getLong(0);
+        if (xHi == yHi) {
+          ${ev.value} = java.lang.Long.compareUnsigned($x.getLong(1), $y.getLong(1)) < 0;
+        } else {
+          ${ev.value} = java.lang.Long.compareUnsigned(xHi, yHi) < 0;
+        }
+      """
+    )
+}
+
+case class Ipv6AddressLteqExpression(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      Ipv6AddressExpressionUtils.ipv6DataType
+    )
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = "<="
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    val xHi = xRow.getLong(0)
+    val yHi = yRow.getLong(0)
+    if (xHi == yHi) {
+      java.lang.Long.compareUnsigned(xRow.getLong(1), yRow.getLong(1)) <= 0
+    } else {
+      java.lang.Long.compareUnsigned(xHi, yHi) <= 0
+    }
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        long xHi = $x.getLong(0);
+        long yHi = $y.getLong(0);
+        if (xHi == yHi) {
+          ${ev.value} = java.lang.Long.compareUnsigned($x.getLong(1), $y.getLong(1)) <= 0;
+        } else {
+          ${ev.value} = java.lang.Long.compareUnsigned(xHi, yHi) <= 0;
+        }
+      """
+    )
+}
+
+case class Ipv6AddressGtExpression(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      Ipv6AddressExpressionUtils.ipv6DataType
+    )
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = ">"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    val xHi = xRow.getLong(0)
+    val yHi = yRow.getLong(0)
+    if (xHi == yHi) {
+      java.lang.Long.compareUnsigned(xRow.getLong(1), yRow.getLong(1)) > 0
+    } else {
+      java.lang.Long.compareUnsigned(xHi, yHi) > 0
+    }
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        long xHi = $x.getLong(0);
+        long yHi = $y.getLong(0);
+        if (xHi == yHi) {
+          ${ev.value} = java.lang.Long.compareUnsigned($x.getLong(1), $y.getLong(1)) > 0;
+        } else {
+          ${ev.value} = java.lang.Long.compareUnsigned(xHi, yHi) > 0;
+        }
+      """
+    )
+}
+
+case class Ipv6AddressGteqExpression(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      Ipv6AddressExpressionUtils.ipv6DataType
+    )
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = ">="
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    val xHi = xRow.getLong(0)
+    val yHi = yRow.getLong(0)
+    if (xHi == yHi) {
+      java.lang.Long.compareUnsigned(xRow.getLong(1), yRow.getLong(1)) >= 0
+    } else {
+      java.lang.Long.compareUnsigned(xHi, yHi) >= 0
+    }
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        long xHi = $x.getLong(0);
+        long yHi = $y.getLong(0);
+        if (xHi == yHi) {
+          ${ev.value} = java.lang.Long.compareUnsigned($x.getLong(1), $y.getLong(1)) >= 0;
+        } else {
+          ${ev.value} = java.lang.Long.compareUnsigned(xHi, yHi) >= 0;
+        }
+      """
+    )
+}

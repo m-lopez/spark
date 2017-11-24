@@ -3492,4 +3492,16 @@ object functions {
 
   def ipv6_address_neq(x: Column, y: Column): Column =
     withExpr(Ipv6AddressNeqExpression(x.expr, y.expr))
+
+  def ipv6_address_lt(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressLtExpression(x.expr, y.expr))
+
+  def ipv6_address_lteq(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressLteqExpression(x.expr, y.expr))
+
+  def ipv6_address_gt(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressGtExpression(x.expr, y.expr))
+
+  def ipv6_address_gteq(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressGteqExpression(x.expr, y.expr))
 }
