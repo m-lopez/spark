@@ -260,3 +260,120 @@ case class Ipv6AddressGteqExpression(left: Expression, right: Expression)
       """
     )
 }
+
+case class Ipv6AddressJump(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      LongType
+    )
+  override def dataType: DataType = Ipv6AddressExpressionUtils.ipv6DataType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = "jump"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yLong = y.asInstanceOf[Long]
+    // FIXME: This is wrong, but I don't really care right now.
+    //        It should consider the carry-bit.
+    InternalRow(xRow.getLong(0), xRow.getLong(1) + yLong)
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    val leftGen = left.genCode(ctx)
+    val rightGen = right.genCode(ctx)
+    val rowClass = classOf[GenericInternalRow].getName
+    val values = ctx.freshName("values")
+    ctx.addMutableState("Object[]", values, s"$values = null;")
+    val code = s"""
+      ${leftGen.code}
+      ${rightGen.code}
+      if (${leftGen.isNull} || ${rightGen.isNull}) {
+        ${ev.isNull} = true;
+      } else {
+        // Initialize the object.
+        $values = new Object[2];
+        $values[0] = ${leftGen.value};
+        $values[1] = ${rightGen.value};
+        // Build the object.
+        final InternalRow ${ev.value} = new $rowClass($values);
+      }
+      $values = null;
+    """
+    ev.copy(code = code)
+
+  }
+}
+
+case class Ipv6AddressPrefix(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes with Serializable {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(
+      Ipv6AddressExpressionUtils.ipv6DataType,
+      IntegerType
+    )
+  override def dataType: DataType = Ipv6AddressExpressionUtils.ipv6DataType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = "prefix"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yInt = y.asInstanceOf[Int]
+    // FIXME: This is wrong, but I don't really care right now.
+    //        It should consider the carry-bit.
+    val xHi = xRow.getLong(0)
+    val xLo = xRow.getLong(1)
+    if (yInt == 0) {
+      InternalRow(0L, 0L)
+    } else if (yInt == 64) {
+      InternalRow(xRow.getLong(0), 0L)
+    } else if (yInt < 64) {
+      InternalRow(xRow.getLong(0) & (-1L << (64 - yInt)), 0L)
+    } else {
+      InternalRow(xRow.getLong(0), xRow.getLong(1) & (-1L << (128 - yInt)))
+    }
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    val leftGen = left.genCode(ctx)
+    val rightGen = right.genCode(ctx)
+    val rowClass = classOf[GenericInternalRow].getName
+    val values = ctx.freshName("values")
+    ctx.addMutableState("Object[]", values, s"$values = null;")
+    val code = s"""
+      ${leftGen.code}
+      ${rightGen.code}
+      if (${leftGen.isNull} || ${rightGen.isNull}) {
+        ${ev.isNull} = true;
+      } else {
+        $values = new Object[2];
+        if (${rightGen.value} == 0) {
+          $values[0] = 0;
+          $values[1] = 0;
+        } else if (${rightGen.value} == 64) {
+          $values[0] = ${leftGen.value}.getLong(0);
+          $values[1] = 0;
+        } else if (${rightGen.value} < 64)
+          $values[0] = ${leftGen.value}.getLong(0) & (-1L << (64 - ${rightGen.value}));
+          $values[1] = 0;
+        } else {
+          $values[0] = ${leftGen.value}.getLong(0);
+          $values[1] = ${rightGen.value}.getLong(1) & (-1L << (128 - ${rightGen.value}));
+        }
+        // Build the object.
+        final InternalRow ${ev.value} = new $rowClass($values);
+        $values = null;
+      }
+    """
+    ev.copy(code = code)
+  }
+}

@@ -3504,4 +3504,12 @@ object functions {
 
   def ipv6_address_gteq(x: Column, y: Column): Column =
     withExpr(Ipv6AddressGteqExpression(x.expr, y.expr))
+
+  def ipv6_address_jump(x: Column, y: Column): Column =
+    withExpr(Ipv6AddressJump(x.expr, y.expr))
+
+  def ipv6_address_prefix(x: Column, y: Int): Column = withExpr {
+    require(0 <= y && y <= 128, "a prefix should be between 0 and 128")
+    Ipv6AddressPrefix(x.expr, Literal(y))
+  }
 }
