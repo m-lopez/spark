@@ -2207,6 +2207,12 @@ object functions {
     withExpr { Ipv4MaskByPrefixLength(x.expr, lit(n).expr) }
   }
 
+  def ipv4_subnet_eq(x: Column, y: Column): Column =
+    withExpr { Ipv4SubnetEq(x.expr, y.expr) }
+
+  def ipv4_subnet_neq(x: Column, y: Column): Column =
+    withExpr { Ipv4SubnetNeq(x.expr, y.expr) }
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions
   //////////////////////////////////////////////////////////////////////////////////////////////

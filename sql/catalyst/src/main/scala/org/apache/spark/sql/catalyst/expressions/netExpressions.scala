@@ -17,6 +17,7 @@
 
 package org.apache.spark.sql.catalyst.expressions
 
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
 import org.apache.spark.sql.types._
 
@@ -101,8 +102,6 @@ case class IPv4Jump(left: Expression, right: Expression)
     nullSafeCodeGen(ctx, ev, (x, y) => { s"${ev.value} = $x + $y;" })
 }
 
-/** @todo What is the proper way to restrict the right operand to [0, 32]?
- */
 case class Ipv4MaskByPrefixLength(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
 
@@ -138,4 +137,64 @@ case class Ipv4MaskByPrefixLength(left: Expression, right: Expression)
         }
       """
     })
+}
+
+object Ipv4Utils {
+  def Ipv4VlsnDataType: DataType =
+    StructType(
+      Array(
+        StructField("address", IntegerType, nullable = false),
+        StructField("prefix_length", ByteType, nullable = false)
+      )
+    )
+}
+
+case class Ipv4SubnetEq(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(Ipv4Utils.Ipv4VlsnDataType, Ipv4Utils.Ipv4VlsnDataType)
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def toString: String = "eq"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    (xRow.getLong(0) == yRow.getLong(0)) && (xRow.getByte(1) == yRow.getByte(1))
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        ${ev.value} = ($x.getLong(0) == $y.getLong(0)) && ($x.getByte(1) == $y.getByte(1));
+      """
+    )
+}
+
+case class Ipv4SubnetNeq(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(Ipv4Utils.Ipv4VlsnDataType, Ipv4Utils.Ipv4VlsnDataType)
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def toString: String = "neq"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    (xRow.getLong(0) != yRow.getLong(0)) || (xRow.getByte(1) != yRow.getByte(1))
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        ${ev.value} = ($x.getLong(0) != $y.getLong(0)) || ($x.getByte(1) != $y.getByte(1));
+      """
+    )
 }
