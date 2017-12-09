@@ -241,8 +241,8 @@ case class Ipv4SubnetIsContainedIn(left: Expression, right: Expression)
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
     nullSafeCodeGen(ctx, ev, (x, y) =>
       s"""
-        byte xPre = $x.getByte(1)
-        byte yPre = $y.getByte(1)
+        byte xPre = $x.getByte(1);
+        byte yPre = $y.getByte(1);
         if (xPre >= yPre) {
           int mask = -1;  // The case where yPre is 32.
           if (yPre == 0) {
@@ -283,8 +283,8 @@ case class Ipv4SubnetIsStrictlyContainedIn(left: Expression, right: Expression)
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
     nullSafeCodeGen(ctx, ev, (x, y) =>
       s"""
-        byte xPre = $x.getByte(1)
-        byte yPre = $y.getByte(1)
+        byte xPre = $x.getByte(1);
+        byte yPre = $y.getByte(1);
         if (xPre >= yPre) {
           int mask = -1;  // The case where yPre is 32.
           if (yPre == 0) {
@@ -299,6 +299,42 @@ case class Ipv4SubnetIsStrictlyContainedIn(left: Expression, right: Expression)
         } else {
           ${ev.value} = false;
         }
+      """
+    )
+}
+
+case class Ipv4SubnetAddressIsContainedIn(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(Ipv4AddressType, Ipv4Utils.Ipv4VlsnDataType)
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def toString: String = "address_is_contained_in"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[Ipv4AddressType.InternalType]
+    val yRow = y.asInstanceOf[InternalRow]
+    Ipv4Utils.isContainedIn(
+      xRow, 32.toByte,
+      yRow.getInt(0), yRow.getByte(1)
+    )
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        byte yPre = $y.getByte(1);
+        int mask = -1;  // The case where yPre is 32.
+        if (yPre == 0) {
+          mask = 0;
+        } else {
+          mask = -1 << (32 - yPre);
+        }
+        int yIp = $y.getInt(0);
+        ${ev.value} = ($x & mask) == yIp;
       """
     )
 }
