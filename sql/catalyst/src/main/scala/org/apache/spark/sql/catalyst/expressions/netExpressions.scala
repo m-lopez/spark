@@ -147,6 +147,28 @@ object Ipv4Utils {
         StructField("prefix_length", ByteType, nullable = false)
       )
     )
+
+  def toMask(prefix_length: Byte): Int =
+    if (prefix_length == 32) {
+      -1
+    } else if (prefix_length == 0) {
+      0
+    } else {
+      -1 << (32 - prefix_length)
+    }
+
+  def isContainedIn(xIp: Int, xPre: Byte, yIp: Int, yPre: Byte): Boolean = {
+    if (xPre >= yPre) {
+      (xIp & toMask(yPre)) == yIp
+    } else {
+      false
+    }
+  }
+
+  def isStrictlyContainedIn(xIp: Int, xPre: Byte, yIp: Int, yPre: Byte): Boolean = {
+    val notSame = !((xIp == yIp) && (xPre == yPre))
+    notSame && isContainedIn(xIp, xPre, yIp, yPre)
+  }
 }
 
 case class Ipv4SubnetEq(left: Expression, right: Expression)
@@ -163,13 +185,13 @@ case class Ipv4SubnetEq(left: Expression, right: Expression)
   override def nullSafeEval(x: Any, y: Any): Any = {
     val xRow = x.asInstanceOf[InternalRow]
     val yRow = y.asInstanceOf[InternalRow]
-    (xRow.getLong(0) == yRow.getLong(0)) && (xRow.getByte(1) == yRow.getByte(1))
+    (xRow.getInt(0) == yRow.getInt(0)) && (xRow.getByte(1) == yRow.getByte(1))
   }
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
     nullSafeCodeGen(ctx, ev, (x, y) =>
       s"""
-        ${ev.value} = ($x.getLong(0) == $y.getLong(0)) && ($x.getByte(1) == $y.getByte(1));
+        ${ev.value} = ($x.getInt(0) == $y.getInt(0)) && ($x.getByte(1) == $y.getByte(1));
       """
     )
 }
@@ -188,13 +210,95 @@ case class Ipv4SubnetNeq(left: Expression, right: Expression)
   override def nullSafeEval(x: Any, y: Any): Any = {
     val xRow = x.asInstanceOf[InternalRow]
     val yRow = y.asInstanceOf[InternalRow]
-    (xRow.getLong(0) != yRow.getLong(0)) || (xRow.getByte(1) != yRow.getByte(1))
+    (xRow.getInt(0) != yRow.getInt(0)) || (xRow.getByte(1) != yRow.getByte(1))
   }
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
     nullSafeCodeGen(ctx, ev, (x, y) =>
       s"""
-        ${ev.value} = ($x.getLong(0) != $y.getLong(0)) || ($x.getByte(1) != $y.getByte(1));
+        ${ev.value} = ($x.getInt(0) != $y.getInt(0)) || ($x.getByte(1) != $y.getByte(1));
+      """
+    )
+}
+
+case class Ipv4SubnetContains(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(Ipv4Utils.Ipv4VlsnDataType, Ipv4Utils.Ipv4VlsnDataType)
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def toString: String = "contains"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    Ipv4Utils.isContainedIn(xRow.getInt(0), xRow.getByte(1), yRow.getInt(0), yRow.getByte(1))
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        byte xPre = $x.getByte(1)
+        byte yPre = $y.getByte(1)
+        if (xPre >= yPre) {
+          int mask = -1;  // The case where yPre is 32.
+          if (yPre == 0) {
+            mask = 0;
+          } else {
+            mask = -1 << (32 - yPre);
+          }
+          int xIp = $x.getInt(0);
+          int yIp = $y.getInt(0);
+          ${ev.value} = (xIp & mask) == yIp;
+        } else {
+          ${ev.value} = false;
+        }
+      """
+    )
+}
+
+case class Ipv4SubnetStrictlyContains(left: Expression, right: Expression)
+  extends BinaryExpression with ExpectsInputTypes {
+
+  override def inputTypes: Seq[AbstractDataType] =
+    Seq(Ipv4Utils.Ipv4VlsnDataType, Ipv4Utils.Ipv4VlsnDataType)
+  override def dataType: DataType = BooleanType
+
+  override def foldable: Boolean = false
+  override def toString: String = "strictly_contains"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any, y: Any): Any = {
+    val xRow = x.asInstanceOf[InternalRow]
+    val yRow = y.asInstanceOf[InternalRow]
+    Ipv4Utils.isStrictlyContainedIn(
+      xRow.getInt(0), xRow.getByte(1),
+      yRow.getInt(0), yRow.getByte(1)
+    )
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x, y) =>
+      s"""
+        byte xPre = $x.getByte(1)
+        byte yPre = $y.getByte(1)
+        if (xPre >= yPre) {
+          int mask = -1;  // The case where yPre is 32.
+          if (yPre == 0) {
+            mask = 0;
+          } else {
+            mask = -1 << (32 - yPre);
+          }
+          int xIp = $x.getInt(0);
+          int yIp = $y.getInt(0);
+          bool notSame = !(xPre == yPre && xIp == yIp);
+          ${ev.value} = notSame && ((xIp & mask) == yIp);
+        } else {
+          ${ev.value} = false;
+        }
       """
     )
 }
