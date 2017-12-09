@@ -2213,11 +2213,11 @@ object functions {
   def ipv4_subnet_neq(x: Column, y: Column): Column =
     withExpr { Ipv4SubnetNeq(x.expr, y.expr) }
 
-  def ipv4_subnet_contains(x: Column, y: Column): Column =
-    withExpr { Ipv4SubnetContains(x.expr, y.expr) }
+  def ipv4_subnet_is_contained_in(x: Column, y: Column): Column =
+    withExpr { Ipv4SubnetIsContainedIn(x.expr, y.expr) }
 
-  def ipv4_subnet_strictly_contains(x: Column, y: Column): Column =
-    withExpr { Ipv4SubnetStrictlyContains(x.expr, y.expr) }
+  def ipv4_subnet_strictly_is_contained_in(x: Column, y: Column): Column =
+    withExpr { Ipv4SubnetIsStrictlyContainedIn(x.expr, y.expr) }
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions

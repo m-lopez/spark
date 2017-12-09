@@ -221,7 +221,7 @@ case class Ipv4SubnetNeq(left: Expression, right: Expression)
     )
 }
 
-case class Ipv4SubnetContains(left: Expression, right: Expression)
+case class Ipv4SubnetIsContainedIn(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
 
   override def inputTypes: Seq[AbstractDataType] =
@@ -260,7 +260,7 @@ case class Ipv4SubnetContains(left: Expression, right: Expression)
     )
 }
 
-case class Ipv4SubnetStrictlyContains(left: Expression, right: Expression)
+case class Ipv4SubnetIsStrictlyContainedIn(left: Expression, right: Expression)
   extends BinaryExpression with ExpectsInputTypes {
 
   override def inputTypes: Seq[AbstractDataType] =
