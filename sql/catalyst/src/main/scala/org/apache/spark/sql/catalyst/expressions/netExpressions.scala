@@ -140,6 +140,17 @@ case class Ipv4MaskByPrefixLength(left: Expression, right: Expression)
 }
 
 object Ipv4Utils {
+
+  def fromString(s: String): Int = {
+    try {
+      val x = s.split("\\.").map(_.toInt.toByte)
+      val buf = java.nio.ByteBuffer.wrap(x)
+      buf.getInt
+    } catch {
+      case _: Exception => null.asInstanceOf[Int]
+    }
+  }
+
   def Ipv4VlsnDataType: DataType =
     StructType(
       Array(
@@ -337,4 +348,35 @@ case class Ipv4SubnetAddressIsContainedIn(left: Expression, right: Expression)
         ${ev.value} = ($x & mask) == yIp;
       """
     )
+}
+
+case class Ipv4FromString(e: Expression)
+  extends UnaryExpression with ExpectsInputTypes {
+
+  override def child: Expression = e
+
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType)
+  override def dataType: DataType = Ipv4AddressType
+
+  override def foldable: Boolean = false
+  override def nullable: Boolean = true
+  override def toString: String = "to_ipv4"
+  override def prettyName: String = toString
+
+  override def nullSafeEval(x: Any): Any = {
+    val s = x.asInstanceOf[StringType.InternalType].toString
+    Ipv4Utils.fromString(s)
+  }
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    nullSafeCodeGen(ctx, ev, (x) => s"""
+      try {
+        String[] octets = $x.split("\\.");
+        byte[] buf = java.utils.Arrays.stream(octets)
+          .map(i -> (byte)Integer.parseInt(i));
+        ${ev.value} = java.nio.ByteBuffer.wrap(buf).getInt();
+      } catch (Exception e) {
+        ${ev.isNull} = true;
+      }
+    """)
 }
